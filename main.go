@@ -59,7 +59,7 @@ func main() {
 	flag.StringVar(&endpoint, "endpoint", "", "S3 endpoint")
 	flag.StringVar(&bucket, "bucket-name", "", "S3 bucket name")
 	flag.StringVar(&region, "region", "", "S3 region")
-	flag.BoolVar(&createbucket, "createbucket", false, "Creates the S3 bucket for you")
+	flag.BoolVar(&createbucket, "createbucket", false, "creates the S3 bucket for you")
 
 	flag.StringVar(&csvfile, "csv", "", "write statisics out to CSV file specified (- for Stdout)")
 

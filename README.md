@@ -66,6 +66,44 @@ In each test, the numbers represent the average time to operation completion
 in milliseconds. Results are binned by percentage of occurence in percent.
 
 
+## Advanced usage
+
+It's possible to decouple the upload and cleanup stage from the download stage.
+
+In order to do that, just specifiy one time **"--upload"** command with like **-w 32** in order
+to upload fast the first time.
+
+Then, for subsequent tests, don't specify --upload, just specify --download, with multiple workers
+test. Like **-w 4,16,32,64** will test 4, 16 32 and 64 workers.
+
+
+Don't be shy with **--max-messages**, having half a million emails is **NOTHING**, please
+be patient while the test is running and upload massive amount of data for the test to be revelent.
+
+**TIPS: you can specify numbers with _ separators, like 5_000_000 for 5 millions**
+
+If an upload session was interrupted, you still can use the **--download** test, as object references
+are retrieved from S3 itself.
+
+
+## Help
+
+```
+Usage of ./s3-mailbench:
+      --bucket-name string         S3 bucket name
+      --clean                      remove test data (requires prior upload)
+      --cleaning-workers int       number of cleaning workers (default 16)
+      --createbucket               creates the S3 bucket for you
+      --csv string                 write statisics out to CSV file specified (- for Stdout)
+      --download                   download test data (requires prior upload)
+      --endpoint string            S3 endpoint
+      --max-messages uint          maximum messages to upload (default 100000)
+  -r, --public-inbox-repo string   public-inbox repository path
+      --region string              S3 region
+      --upload                     upload test data (requires public-inbox-repo)
+  -w, --workers ints               number of workers (separated by comma) (default [4,8,16,32])
+```
+
 ## License
 
 This project is released under the [MIT License](LICENSE).
