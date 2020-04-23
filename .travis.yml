@@ -17,5 +17,4 @@ deploy:
   skip_cleanup: true
   cleanup: false
   on:
-    repo: zehome/s3-mailbench
     tags: true

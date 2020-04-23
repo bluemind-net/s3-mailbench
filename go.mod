@@ -1,4 +1,4 @@
-module github.com/zehome/s3-mailbench
+module github.com/bluemind-net/s3-mailbench
 
 go 1.13
 
