@@ -1,4 +1,4 @@
-module github.com/dvassallo/s3-benchmark
+module github.com/zehome/s3-mailbench
 
 go 1.13
 

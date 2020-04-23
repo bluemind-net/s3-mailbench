@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
 	"github.com/olekukonko/tablewriter"
 	"io"
@@ -30,6 +31,7 @@ type Stats struct {
 	TotalTime  time.Duration
 	Rate       float64
 	Count      uint64
+	ObjectRate float64
 }
 
 func NewStats(title string) *Stats {
@@ -42,30 +44,28 @@ func NewStats(title string) *Stats {
 		Count:      0,
 		Start:      time.Now(),
 		Rate:       0,
+		ObjectRate:	0,
 	}
 }
 
 func PrintStats(writer io.Writer, stats []*Stats) {
 	table := tablewriter.NewWriter(writer)
-	table.SetHeader([]string{
-		"Test", "Throughput",
-		"avg", "p25", "p50", "p75", "p90", "p99", "max",
-	})
+	table.SetHeader(GetHeader())
 	for _, stat := range stats {
 		stat.Refresh()
-		table.Append([]string{
-			stat.Title,
-			fmt.Sprintf("%s/s", byteFormat(stat.Rate)),
-			fmt.Sprintf("%.0f", stat.Latency[avg]),
-			fmt.Sprintf("%.0f", stat.Latency[p25]),
-			fmt.Sprintf("%.0f", stat.Latency[p50]),
-			fmt.Sprintf("%.0f", stat.Latency[p75]),
-			fmt.Sprintf("%.0f", stat.Latency[p90]),
-			fmt.Sprintf("%.0f", stat.Latency[p99]),
-			fmt.Sprintf("%.0f", stat.Latency[max]),
-		})
+		table.Append(stat.GetData())
 	}
 	table.Render()
+}
+
+func WriteCSV(writer io.Writer, stats[] *Stats) {
+	w := csv.NewWriter(writer)
+	w.Write(GetHeader())
+	for _, stat := range stats {
+		stat.Refresh()
+		w.Write(stat.GetData())
+	}
+	w.Flush()
 }
 
 func (stats *Stats) Update(result Result) {
@@ -75,6 +75,7 @@ func (stats *Stats) Update(result Result) {
 	stats.Count++
 	totalTime := time.Now().Sub(stats.Start)
 	stats.Rate = (float64(stats.SumBytes)) / (totalTime.Seconds())
+	stats.ObjectRate = (float64(stats.Count)) / (totalTime.Seconds())
 }
 
 func (stats *Stats) Refresh() {
@@ -93,16 +94,18 @@ func (stats *Stats) Refresh() {
 	stats.Latency[p99] = float64(stats.DataPoints[int(float64(stats.Count)*float64(0.99))-1].Latency.Nanoseconds()) / 1_000_000
 }
 
-func (stats *Stats) Print(writer io.Writer) {
-	stats.Refresh()
-	table := tablewriter.NewWriter(writer)
-	table.SetHeader([]string{
-		"Test", "Throughput",
+func GetHeader() []string {
+	return []string{
+		"Test", "Throughput", "Rate",
 		"avg", "p25", "p50", "p75", "p90", "p99", "max",
-	})
-	table.Append([]string{
+	}
+}
+
+func (stats *Stats) GetData() []string {
+	return []string{
 		stats.Title,
 		fmt.Sprintf("%s/s", byteFormat(stats.Rate)),
+		fmt.Sprintf("%.0f obj/s", stats.ObjectRate),
 		fmt.Sprintf("%.0f", stats.Latency[avg]),
 		fmt.Sprintf("%.0f", stats.Latency[p25]),
 		fmt.Sprintf("%.0f", stats.Latency[p50]),
@@ -110,7 +113,14 @@ func (stats *Stats) Print(writer io.Writer) {
 		fmt.Sprintf("%.0f", stats.Latency[p90]),
 		fmt.Sprintf("%.0f", stats.Latency[p99]),
 		fmt.Sprintf("%.0f", stats.Latency[max]),
-	})
+	}
+}
+
+func (stats *Stats) Print(writer io.Writer) {
+	stats.Refresh()
+	table := tablewriter.NewWriter(writer)
+	table.SetHeader(GetHeader())
+	table.Append(stats.GetData())
 	table.Render()
 }
 

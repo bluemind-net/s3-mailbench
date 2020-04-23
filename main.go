@@ -6,6 +6,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/schollz/progressbar/v3"
+	"io"
 	"math"
 	"os"
 	"sync"
@@ -45,16 +46,22 @@ func main() {
 	var action_upload bool
 	var action_download bool
 	var action_clean bool
-
+	var csvfile string
 	var workers []int
+	var cleanworkers int
+	var csvwriter io.Writer
+	var err error
 
 	flag.StringVarP(&repopath, "public-inbox-repo", "r", "", "public-inbox repository path")
 	flag.IntSliceVarP(&workers, "workers", "w", []int{4,8,16,32}, "number of workers (separated by comma)")
+	flag.IntVar(&cleanworkers, "cleaning-workers", 16, "number of cleaning workers")
 	flag.Uint64Var(&maxmessages, "max-messages", 100_000, "maximum messages to upload")
 	flag.StringVar(&endpoint, "endpoint", "", "S3 endpoint")
 	flag.StringVar(&bucket, "bucket-name", "", "S3 bucket name")
 	flag.StringVar(&region, "region", "", "S3 region")
 	flag.BoolVar(&createbucket, "createbucket", false, "Creates the S3 bucket for you")
+
+	flag.StringVar(&csvfile, "csv", "", "write statisics out to CSV file specified (- for Stdout)")
 
 	flag.BoolVar(&action_upload, "upload", false, "upload test data (requires public-inbox-repo)")
 	flag.BoolVar(&action_download, "download", false, "download test data (requires prior upload)")
@@ -87,6 +94,16 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
+	if len(csvfile) > 0 {
+		if csvfile == "-" {
+			csvwriter = os.Stdout
+		} else {
+			f, err := os.OpenFile(csvfile, os.O_RDWR | os.O_TRUNC | os.O_CREATE, 0644)
+			defer f.Close()
+			csvwriter = f
+			CheckIfError(err)
+		}
+	}
 
 	if ! action_upload && !action_download && !action_clean {
 		fmt.Println("either --upload --download or --clean MUST be specified")
@@ -98,7 +115,7 @@ func main() {
 
 	Info("s3: setup using %s", endpoint)
 	s3 := NewS3(endpoint, bucket, region, createbucket)
-	err := s3.Setup()
+	err = s3.Setup()
 	CheckIfError(err)
 
 	Info("s3: testing")
@@ -112,25 +129,28 @@ func main() {
 			statslist = append(statslist, stats)
 			RunTest(workercount, "upload", stats, s3)
 		}
-		PrintStats(os.Stdout, statslist)
+		PrintStats(os.Stderr, statslist)
 		if action_download {
 			Info("download test with %d workers", workercount)
 			stats := NewStats(fmt.Sprintf("GET %d", workercount))
 			statslist = append(statslist, stats)
 			RunTest(workercount, "download", stats, s3)
 		}
-		PrintStats(os.Stdout, statslist)
+		PrintStats(os.Stderr, statslist)
 	}
 
 	if action_clean {
-		Info("clean with %d workers", 8)
-		stats := NewStats("DEL 8")
+		Info("clean with %d workers", cleanworkers)
+		stats := NewStats(fmt.Sprintf("DEL %d", cleanworkers))
 		statslist = append(statslist, stats)
-		RunTest(8, "clean", stats, s3)
+		RunTest(cleanworkers, "clean", stats, s3)
 	}
-	PrintStats(os.Stdout, statslist)
+	PrintStats(os.Stderr, statslist)
 
 	// CSV output
+	if len(csvfile) > 0 {
+		WriteCSV(csvwriter, statslist)
+	}
 }
 
 

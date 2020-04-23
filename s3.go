@@ -112,7 +112,7 @@ func (conf *S3) DeleteWorker(wg *sync.WaitGroup, jobs <-chan *string, results ch
 		if err == nil {
 			results <- Result{
 				Latency: time.Now().Sub(latencyTimer),
-				Size:    1,
+				Size:    0,
 			}
 		} else {
 			errcount++
