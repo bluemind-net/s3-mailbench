@@ -1,0 +1,21 @@
+language: go
+go:
+  - 1.14
+
+script: make release
+
+deploy:
+  provider: releases
+  api_key:
+    secure: "BWkeXNPsCEngbdJ/ydmC8zQ6XFLO3zUTpQc988X4eRPfVKZnjWH6mjz1TesyJ+RRt/VMmFq3635puRmQ9xuoIFdyvMtBMewBfO585CX5QVnwwEaPsg0EW5GaI1xus/FhsDaKaWtGltTG0KU5T9dRlHexpo/0ucw1SJTJiN5LWUrbPCZx0Y7wVSFS5QoeQ7RGUUcJDp0RWCtCTY8Ob9ZPGhhR40EXT94kchZlLdSoJoDxleJyHNP6FOYa9LIKjO5JPf2mkkwjJhyt3em3hZWjhkyVvJLASEIMKgemHOAAVs7slKmt1r+r5sphGk15JMukUpYeXNd3o90pn2HPjqcwpReNXWzGnAxLKBwPKLe9+GShS+YalG5orofCGUj2cBWPOuZ6fU4X+MqBYe8TuIBqPBOloqjNYDnJX1XKQVxnCNkYMi/sPIxG6eKnvoP1KJ2I7tMYL2VrknGwki/yIJLJNdq/ju55zRfRyAgdsWd0dFtzbikrEUOV3JHtdrwYuaqw5KsX7XUEdrVvx9PG2tfo/sVNyddfp6TZQr0pGJQaFxarbe8E4isSKty6G6k4YDEGN2ic/EH8ExPDmLw2CuzIi0Tcno1N9Yus+ZwXk2UVPq69kiKXagw+Q0Dzqo81OF0nb7EWmk9Gf8SnjfQ7OdfLd68BDkGJ0DU7ekcH60mPONc="
+  file:
+    - "s3-mailbench*"
+    - README.md
+  file_glob: true
+  draft: true
+  overwrite: true
+  skip_cleanup: true
+  cleanup: false
+  on:
+    repo: zehome/s3-mailbench
+    tags: true
